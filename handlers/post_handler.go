@@ -9,11 +9,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Получить все посты с пагинацией и фильтрацией
 func GetPosts(c *gin.Context) {
 	var posts []models.Post
 
-	// Получаем параметры для пагинации
 	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if err != nil {
 		page = 1
@@ -51,11 +49,9 @@ func GetPosts(c *gin.Context) {
 		return
 	}
 
-	// Ответ с постами
 	c.JSON(http.StatusOK, posts)
 }
 
-// Добавить новый пост
 func AddPost(c *gin.Context) {
 	var post models.Post
 	if err := c.ShouldBindJSON(&post); err != nil {
@@ -77,7 +73,6 @@ func AddPost(c *gin.Context) {
 	c.JSON(http.StatusCreated, post)
 }
 
-// Получить пост по ID
 func GetPostByID(c *gin.Context) {
 	id := c.Param("id")
 	var post models.Post
@@ -91,24 +86,20 @@ func GetPostByID(c *gin.Context) {
 	c.JSON(http.StatusOK, post)
 }
 
-// Обновить пост по ID
 func UpdatePost(c *gin.Context) {
 	id := c.Param("id")
 	var post models.Post
 
-	// Проверим, существует ли пост
 	if err := config.DB.First(&post, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Пост не найден"})
 		return
 	}
 
-	// Привязываем новые данные
 	if err := c.ShouldBindJSON(&post); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Неверные данные"})
 		return
 	}
 
-	// Обновляем пост
 	result := config.DB.Save(&post)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось обновить пост"})
@@ -118,7 +109,6 @@ func UpdatePost(c *gin.Context) {
 	c.JSON(http.StatusOK, post)
 }
 
-// Удалить пост по ID
 func DeletePost(c *gin.Context) {
 	id := c.Param("id")
 	var post models.Post
@@ -129,7 +119,6 @@ func DeletePost(c *gin.Context) {
 		return
 	}
 
-	// Удаляем пост
 	result := config.DB.Delete(&post)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось удалить пост"})
@@ -137,4 +126,46 @@ func DeletePost(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Пост удален"})
+}
+
+func GetPostsByUserID(c *gin.Context) {
+	userID := c.Param("id") // Получаем ID пользователя из параметра маршрута
+
+	var posts []models.Post
+
+	// Получаем посты конкретного пользователя
+	result := config.DB.Where("user_id = ?", userID).Preload("User").Preload("Category").Find(&posts)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось получить посты пользователя"})
+		return
+	}
+
+	if len(posts) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"message": "Посты пользователя не найдены"})
+		return
+	}
+
+	c.JSON(http.StatusOK, posts)
+}
+
+func GetPostsByCategoryID(c *gin.Context) {
+	categoryID := c.Param("id") // Получаем ID категории из параметра маршрута
+
+	var posts []models.Post
+
+	// Получаем посты конкретной категории с подгрузкой связанных данных (User и Category)
+	result := config.DB.Where("category_id = ?", categoryID).Preload("User").Preload("Category").Find(&posts)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось получить посты по категории"})
+		return
+	}
+
+	// Если посты не найдены
+	if len(posts) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"message": "Посты категории не найдены"})
+		return
+	}
+
+	// Возвращаем найденные посты
+	c.JSON(http.StatusOK, posts)
 }
