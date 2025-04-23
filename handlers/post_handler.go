@@ -54,22 +54,37 @@ func GetPosts(c *gin.Context) {
 
 func AddPost(c *gin.Context) {
 	var post models.Post
+
+	// Биндинг JSON в структуру post
 	if err := c.ShouldBindJSON(&post); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Неверные данные"})
 		return
 	}
 
+	// Проверка обязательных полей
 	if post.Title == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Название поста обязательно"})
 		return
 	}
 
-	result := config.DB.Create(&post)
-	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось добавить пост"})
+	// Проверка инициализации базы данных
+	if config.DB == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "База данных не инициализирована"})
 		return
 	}
 
+	// Создание поста в базе данных
+	result := config.DB.Create(&post)
+	if result.Error != nil {
+		// Логирование ошибки и отправка ответа
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Не удалось добавить пост",
+			"details": result.Error.Error(), // Подробности об ошибке
+		})
+		return
+	}
+
+	// Успешный ответ с созданным постом
 	c.JSON(http.StatusCreated, post)
 }
 
@@ -167,5 +182,18 @@ func GetPostsByCategoryID(c *gin.Context) {
 	}
 
 	// Возвращаем найденные посты
+	c.JSON(http.StatusOK, posts)
+}
+
+func SearchPostsByTitle(c *gin.Context) {
+	query := c.Query("q")
+	var posts []models.Post
+
+	result := config.DB.Where("title ILIKE ?", "%"+query+"%").Find(&posts)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при поиске постов"})
+		return
+	}
+
 	c.JSON(http.StatusOK, posts)
 }

@@ -32,9 +32,15 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// Если нужно, можно сохранить имя пользователя
+		// Извлекаем claims и проверяем user_id
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {
-			c.Set("user_id", claims["user_id"])
+			userId, ok := claims["user_id"].(float64) // Преобразуем в число
+			if !ok {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+				c.Abort()
+				return
+			}
+			c.Set("user_id", uint(userId)) // Сохраняем в контексте
 		}
 
 		c.Next()
