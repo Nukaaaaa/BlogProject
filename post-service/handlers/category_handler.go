@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"BackendProject/post-service/config"
-	"BackendProject/post-service/models"
+	"myproject/config"
+	"myproject/models"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

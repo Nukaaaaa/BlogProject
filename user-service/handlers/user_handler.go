@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"BackendProject/post-service/config"
-	"BackendProject/post-service/models"
 	"net/http"
+	"user-service/config"
+	"user-service/models"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"

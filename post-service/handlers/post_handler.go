@@ -1,11 +1,13 @@
 package handlers
 
 import (
-	"BackendProject/post-service/config"
-	"BackendProject/post-service/models"
+	"fmt"
 	"github.com/go-resty/resty/v2"
 	"log"
+	"myproject/config"
+	"myproject/models"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -207,10 +209,12 @@ func GetUserFromUserService(c *gin.Context) {
 	// Логируем запрос к user-service
 	log.Printf("[RequestID: %s] Calling user-service for user ID: %s", requestID, userID)
 
+	userServiceHost := os.Getenv("USER_SERVICE_HOST") // например, "user-service:8081"
+	url := fmt.Sprintf("http://%s/users/%s", userServiceHost, userID)
+
 	resp, err := client.R().
-		SetQueryParam("id", userID).
 		SetResult(&models.User{}).
-		Get("http://localhost:8081/users/" + userID)
+		Get(url)
 
 	if err != nil {
 		log.Printf("[RequestID: %s] Error calling user-service: %v", requestID, err)

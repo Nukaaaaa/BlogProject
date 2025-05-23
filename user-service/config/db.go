@@ -3,25 +3,20 @@ package config
 import (
 	"database/sql"
 	"fmt"
-	"github.com/golang-migrate/migrate/v4"
-	migratepg "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/joho/godotenv"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 	"log"
 	"os"
 	"strconv"
+
+	"github.com/golang-migrate/migrate/v4"
+	migratepg "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 var DB *gorm.DB
 
 func ConnectDatabase() {
-	// Загрузка переменных окружения из .env файла
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Ошибка загрузки .env файла")
-	}
 
 	// Получаем параметры подключения из переменных окружения
 	host := os.Getenv("DB_HOST")
@@ -30,7 +25,6 @@ func ConnectDatabase() {
 	password := os.Getenv("DB_PASSWORD")
 	dbname := os.Getenv("DB_NAME")
 
-	// Преобразуем порт в целое число
 	port, err := strconv.Atoi(portStr)
 	if err != nil {
 		log.Fatalf("Неверный порт: %v", err)
@@ -44,19 +38,19 @@ func ConnectDatabase() {
 
 	log.Printf("DSN: %s", dsn)
 
-	// Подключаемся к базе данных
+	// Создаём подключение к sql.DB
 	sqlDB, err := sql.Open("postgres", dsn)
 	if err != nil {
 		log.Fatal("Ошибка подключения к БД:", err)
 	}
 
-	// Создаем драйвер для миграций
+	// Создаём драйвер миграций
 	driver, err := migratepg.WithInstance(sqlDB, &migratepg.Config{})
 	if err != nil {
 		log.Fatal("Ошибка создания драйвера миграций:", err)
 	}
 
-	// Создаем мигратор
+	// Создаём мигратор
 	m, err := migrate.NewWithDatabaseInstance(
 		"file://migrations", // Убедитесь, что путь правильный!
 		"postgres",

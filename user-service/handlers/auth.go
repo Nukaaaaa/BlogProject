@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"BackendProject/post-service/config"
-	"BackendProject/post-service/models"
 	"net/http"
 	"time"
+	"user-service/config"
+	"user-service/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"

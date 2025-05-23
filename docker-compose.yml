@@ -3,7 +3,7 @@ version: '3.8'
 services:
   my_postgres_db:
     image: postgres:latest
-    container_name: postgres
+    container_name: postgresdb
     restart: always
     environment:
       POSTGRES_USER: postgres
@@ -19,7 +19,7 @@ services:
       - my_postgres_db
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: post-service/Dockerfile
     image: 'my-post-service-iso'
     container_name: 'my-post-service-container'
     environment:
@@ -28,10 +28,28 @@ services:
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_NAME: postgres
+      USER_SERVICE_HOST: user-service:8081
     ports:
       - "8080:8080"
     volumes:
       - ./post-service/migrations:/app/post-service/migrations
+
+  user-service:
+    depends_on:
+      - my_postgres_db
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile
+    image: 'my-user-service-iso'
+    container_name: 'my-user-service-container'
+    environment:
+      DB_HOST: my_postgres_db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: postgres
+    ports:
+      - "8081:8081"
+
 volumes:
   pg_data:
-
